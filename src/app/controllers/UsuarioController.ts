@@ -188,10 +188,24 @@ class UsuarioController {
                 return res.status(400).json({message: 'User not found'});
             }
 
-            const { nome, email, cpf } = req.body;
+            const { nome, email, cpf, cargo } = req.body;
 
-            if (!this.cpfValidate(cpf)) {
+            if (
+                cpf &&
+                !this.cpfValidate(cpf)
+            ) {
                 return res.status(400).json({message: 'Invalid CPF'});
+            }
+        
+            if (cargo) {
+                const cargoExists = await CargoRepository.getCargo({
+                    empresa: reqEmpresa,
+                    id: cargo
+                });
+    
+                if (!cargoExists) {
+                    return res.status(404).json({ message: 'Role not found' });
+                }
             }
 
             const userToUpdate = await UsuarioRepository.getUser({
@@ -205,10 +219,11 @@ class UsuarioController {
             
             (typeof nome !== 'undefined') ? userToUpdate.nome = nome : null;
             (typeof email !== 'undefined') ? userToUpdate.email = email : null;
+            (typeof cargo !== 'undefined') ? userToUpdate.cargo = cargo : null;
 
             if (typeof cpf !== 'undefined') {
                 const formatedCpf = cpf.replace(/[^\d]/g, '');
-
+                
                 userToUpdate.cpf = formatedCpf;
             }
 
